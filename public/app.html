@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>AR Consultoria</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div class="app">
+  <aside class="lateral">
+    <div class="marca"><img src="/logo" alt="AR Consultoria"></div>
+    <nav id="menu">
+      <div class="grupo">Visão geral</div>
+      <a href="#painel" data-secao="painel"><i data-ic="casa"></i> Painel</a>
+      <a href="#portfolio" data-secao="portfolio"><i data-ic="livro"></i> Portfólio</a>
+      <div class="grupo">Comercial</div>
+      <a href="#leads" data-secao="leads"><i data-ic="funil"></i> Leads <span class="cont" id="cont-leads" hidden></span></a>
+      <a href="#clientes" data-secao="clientes"><i data-ic="usuarios"></i> Clientes</a>
+      <a href="#propostas" data-secao="propostas"><i data-ic="documento"></i> Propostas</a>
+      <div class="grupo">Operação</div>
+      <a href="#projetos" data-secao="projetos"><i data-ic="maleta"></i> Projetos</a>
+      <a href="#financeiro" data-secao="financeiro"><i data-ic="dinheiro"></i> Financeiro</a>
+      <a href="#documentos" data-secao="documentos"><i data-ic="arquivos"></i> Documentos e timbrado</a>
+      <a href="/admin" id="link-admin" hidden><i data-ic="ajustes"></i> Administração</a>
+    </nav>
+    <div class="cartao-usuario">
+      <span class="av" id="av-usuario"></span>
+      <div><b id="nome-usuario"></b><small id="perfil-usuario"></small></div>
+      <button id="btn-senha" title="Trocar senha"><i data-ic="chave"></i></button>
+      <button id="btn-sair" title="Sair"><i data-ic="sair"></i></button>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="topo">
+      <div class="ola"><b id="saudacao"></b><small id="hoje"></small></div>
+      <div class="mes" title="Mês de referência do painel e do financeiro">
+        <button id="mes-ant" aria-label="Mês anterior"><i data-ic="esq"></i></button>
+        <label><i data-ic="calendario"></i><span><small>Mês de referência</small><span id="nome-comp"></span></span>
+          <input type="month" id="competencia" aria-label="Mês de referência"></label>
+        <button id="mes-prox" aria-label="Próximo mês"><i data-ic="dir"></i></button>
+      </div>
+    </header>
+
+    <main class="conteudo">
+      <!-- ================= PAINEL ================= -->
+      <section data-secao="painel" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="grafico"></i> Visão geral</span>
+            <h1>Painel de <span id="painel-mes"></span></h1>
+            <p>Funil comercial, propostas, projetos e caixa da AR Consultoria em um só lugar.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" data-gerar-portfolio><i data-ic="livro"></i> Gerar portfólio</button>
+            <a class="btn sec" href="#propostas" data-nova-proposta><i data-ic="mais"></i> Nova proposta</a>
+          </div>
+        </div>
+        <div class="aviso-box alerta" id="aviso-senha-padrao" hidden>
+          <i data-ic="alerta"></i> <span>Você está usando a senha inicial do administrador. <a href="#" id="link-trocar-senha">Troque agora</a>.</span>
+        </div>
+        <div class="cards" id="kpis"></div>
+        <div class="duas-col">
+          <div>
+            <div class="cartao">
+              <div class="cartao-cab"><h2><span class="bolha indigo"><i data-ic="grafico"></i></span> Receitas × despesas</h2>
+                <a class="btn sec peq" href="#financeiro">Financeiro <i data-ic="dir"></i></a></div>
+              <div id="painel-grafico"></div>
+            </div>
+            <div class="cartao">
+              <div class="cartao-cab"><h2><span class="bolha"><i data-ic="maleta"></i></span> Projetos em andamento</h2>
+                <a class="btn sec peq" href="#projetos">Ver projetos <i data-ic="dir"></i></a></div>
+              <div id="painel-projetos"></div>
+            </div>
+          </div>
+          <div>
+            <div class="cartao">
+              <div class="cartao-cab"><h2><span class="bolha ciano"><i data-ic="funil"></i></span> Funil comercial</h2>
+                <a class="btn sec peq" href="#leads">Leads <i data-ic="dir"></i></a></div>
+              <div id="painel-funil"></div>
+            </div>
+            <div class="cartao">
+              <div class="cartao-cab"><h2><span class="bolha ambar"><i data-ic="relogio"></i></span> Agenda e vencimentos</h2></div>
+              <div id="painel-agenda"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PORTFÓLIO ================= -->
+      <section data-secao="portfolio" hidden>
+        <div class="hero hero-escuro">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="livro"></i> Apresentação</span>
+            <h1>Portfólio</h1>
+            <p>Mantenha aqui os seus serviços, o Vértice e os outros trabalhos. O sistema monta o portfólio em PDF com a identidade da AR — completo ou personalizado para cada cliente.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn branco" data-gerar-portfolio><i data-ic="baixar"></i> Gerar portfólio em PDF</button>
+          </div>
+        </div>
+        <div class="paginas-portfolio" id="pf-paginas"></div>
+
+        <div class="cartao">
+          <div class="cartao-cab">
+            <div><h2><span class="bolha"><i data-ic="app"></i></span> Aplicativos, painéis e projetos</h2>
+              <p>Itens com <b>destaque</b> ganham uma página inteira no portfólio (como o Vértice); os demais aparecem em “Outros trabalhos”.</p></div>
+            <button class="btn" id="pf-novo-item"><i data-ic="mais"></i> Novo item</button>
+          </div>
+          <div class="grade-vitrine" id="pf-itens"></div>
+        </div>
+
+        <div class="cartao">
+          <div class="cartao-cab">
+            <div><h2><span class="bolha ciano"><i data-ic="estrela"></i></span> Serviços</h2>
+              <p>Aparecem na página “Como posso te ajudar” e servem de catálogo para os itens das propostas.</p></div>
+            <button class="btn" id="pf-novo-servico"><i data-ic="mais"></i> Novo serviço</button>
+          </div>
+          <div id="pf-servicos"></div>
+        </div>
+
+        <div class="cartao">
+          <div class="cartao-cab">
+            <div><h2><span class="bolha indigo"><i data-ic="usuario"></i></span> Capa, sobre mim e contato</h2>
+              <p>Textos usados na capa, na página “Sobre mim” e na página de contato.</p></div>
+          </div>
+          <form id="pf-textos" class="grade-form">
+            <div><label class="rotulo">Título do portfólio</label><input type="text" name="portfolio_titulo"></div>
+            <div><label class="rotulo">Anos de experiência <small>(destaque)</small></label><input type="text" name="portfolio_anos" placeholder="10+"></div>
+            <div><label class="rotulo">Seu nome</label><input type="text" name="responsavel_nome"></div>
+            <div><label class="rotulo">Cargo / assinatura</label><input type="text" name="responsavel_cargo"></div>
+            <div class="inteiro"><label class="rotulo">Especialidades <small>(linha abaixo do nome na capa)</small></label><input type="text" name="portfolio_chamada"></div>
+            <div class="inteiro"><label class="rotulo">Frase de apresentação <small>(capa)</small></label><textarea name="portfolio_frase" style="min-height:4em"></textarea></div>
+            <div class="inteiro"><label class="rotulo">Sobre mim</label><textarea name="portfolio_sobre" style="min-height:8em"></textarea></div>
+            <div class="inteiro"><label class="rotulo">Empresas em que atuou <small>(separadas por vírgula)</small></label><input type="text" name="portfolio_empresas"></div>
+            <div class="inteiro"><label class="rotulo">Principais habilidades <small>(uma por linha: Título | descrição — até 4)</small></label><textarea name="portfolio_habilidades" style="min-height:7em"></textarea></div>
+            <div><label class="rotulo">WhatsApp <small>(só números, com DDI e DDD)</small></label><input type="text" name="whatsapp" placeholder="5511986345441"></div>
+            <div><label class="rotulo">Instagram</label><input type="text" name="instagram" placeholder="@usuario"></div>
+            <div><label class="rotulo">LinkedIn</label><input type="text" name="linkedin"></div>
+            <div><label class="rotulo">Link do portfólio online <small>(opcional)</small></label><input type="text" name="portfolio_link" placeholder="https://…"></div>
+            <div class="inteiro linha fim"><span class="suave" style="margin-right:auto">Telefone, e-mail e logo ficam em Administração → Empresa e timbrado.</span>
+              <button class="btn" type="submit"><i data-ic="check"></i> Salvar textos</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= LEADS ================= -->
+      <section data-secao="leads" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="funil"></i> Comercial</span>
+            <h1>Leads</h1>
+            <p>Acompanhe cada contato do primeiro “oi” até a proposta aprovada. Arraste os cartões entre as colunas para mudar a etapa.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" id="ld-novo"><i data-ic="mais"></i> Novo lead</button>
+            <button class="btn sec" id="ld-xlsx"><i data-ic="planilha"></i> Excel</button>
+          </div>
+        </div>
+        <div class="barra-ferr">
+          <div class="busca cresce" style="max-width:420px"><i data-ic="busca"></i><input type="search" id="ld-busca" placeholder="Buscar por nome, empresa, interesse…"></div>
+          <span class="suave" id="ld-info"></span>
+        </div>
+        <div class="kanban" id="ld-kanban"></div>
+      </section>
+
+      <!-- ================= CLIENTES ================= -->
+      <section data-secao="clientes" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="usuarios"></i> Comercial</span>
+            <h1>Clientes</h1>
+            <p>Cadastro dos clientes com propostas, projetos e valores já recebidos.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" id="cl-novo"><i data-ic="mais"></i> Novo cliente</button>
+            <label class="btn sec"><input type="file" accept=".xlsx,.xls,.csv" id="cl-importar" hidden><i data-ic="enviar"></i> Importar Excel</label>
+            <button class="btn fantasma" id="cl-modelo"><i data-ic="baixar"></i> Baixar modelo</button>
+          </div>
+        </div>
+        <div class="cards" id="cl-kpis"></div>
+        <div class="barra-ferr">
+          <div class="busca cresce" style="max-width:420px"><i data-ic="busca"></i><input type="search" id="cl-busca" placeholder="Buscar cliente por nome, contato, cidade…"></div>
+          <label class="check"><input type="checkbox" id="cl-inativos"> mostrar inativos</label>
+          <span class="cresce"></span>
+          <button class="btn sec" id="cl-xlsx"><i data-ic="planilha"></i> Excel</button>
+          <button class="btn sec" id="cl-pdf"><i data-ic="baixar"></i> PDF timbrado</button>
+        </div>
+        <div id="cl-tabela"></div>
+      </section>
+
+      <!-- ================= PROPOSTAS ================= -->
+      <section data-secao="propostas" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="documento"></i> Comercial</span>
+            <h1>Propostas</h1>
+            <p>Monte propostas a partir do catálogo de serviços e gere o PDF com o timbrado da AR. Proposta aprovada vira projeto com as parcelas a receber.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" id="pr-nova"><i data-ic="mais"></i> Nova proposta</button>
+          </div>
+        </div>
+        <div class="cards" id="pr-kpis"></div>
+        <div class="barra-ferr">
+          <div class="busca cresce" style="max-width:420px"><i data-ic="busca"></i><input type="search" id="pr-busca" placeholder="Buscar por número, título ou cliente…"></div>
+          <div class="filtros" id="pr-filtros" style="margin:0"></div>
+        </div>
+        <div id="pr-tabela"></div>
+      </section>
+
+      <!-- ================= PROJETOS ================= -->
+      <section data-secao="projetos" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="maleta"></i> Operação</span>
+            <h1>Projetos</h1>
+            <p>Entregas em andamento, prazos, progresso e quanto já foi recebido de cada projeto.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" id="pj-novo"><i data-ic="mais"></i> Novo projeto</button>
+            <button class="btn sec" id="pj-xlsx"><i data-ic="planilha"></i> Excel</button>
+          </div>
+        </div>
+        <div class="barra-ferr">
+          <div class="busca cresce" style="max-width:420px"><i data-ic="busca"></i><input type="search" id="pj-busca" placeholder="Buscar projeto ou cliente…"></div>
+          <div class="filtros" id="pj-filtros" style="margin:0"></div>
+        </div>
+        <div class="grade-projetos" id="pj-lista"></div>
+      </section>
+
+      <!-- ================= FINANCEIRO ================= -->
+      <section data-secao="financeiro" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="dinheiro"></i> <span id="fn-mes"></span></span>
+            <h1>Financeiro</h1>
+            <p>Receitas e despesas da consultoria: o que entrou, o que falta receber, o que foi pago e o saldo do mês.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn" id="fn-receita"><i data-ic="mais"></i> Receita</button>
+            <button class="btn ciano" id="fn-despesa"><i data-ic="mais"></i> Despesa</button>
+          </div>
+        </div>
+        <div class="cards" id="fn-kpis"></div>
+        <div id="fn-atrasados"></div>
+        <div class="cartao">
+          <div class="cartao-cab">
+            <h2><span class="bolha"><i data-ic="tabela"></i></span> Lançamentos do mês</h2>
+            <div class="linha">
+              <div class="filtros" id="fn-filtros" style="margin:0"></div>
+              <button class="btn sec peq" id="fn-xlsx"><i data-ic="planilha"></i> Excel</button>
+              <button class="btn sec peq" id="fn-pdf"><i data-ic="baixar"></i> PDF timbrado</button>
+            </div>
+          </div>
+          <div id="fn-tabela"></div>
+        </div>
+        <div class="duas-col">
+          <div class="cartao">
+            <div class="cartao-cab"><h2><span class="bolha indigo"><i data-ic="grafico"></i></span> Visão anual · <span id="fn-ano"></span></h2></div>
+            <div id="fn-anual"></div>
+          </div>
+          <div class="cartao">
+            <div class="cartao-cab"><h2><span class="bolha ciano"><i data-ic="etiqueta"></i></span> Por categoria</h2></div>
+            <div id="fn-categorias"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= DOCUMENTOS ================= -->
+      <section data-secao="documentos" hidden>
+        <div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="arquivos"></i> Papel timbrado</span>
+            <h1>Documentos e timbrado</h1>
+            <p>Gere papel timbrado em branco ou escreva contratos, recibos e cartas já com a identidade da AR Consultoria.</p>
+          </div>
+        </div>
+        <div class="cartao timbrado-cartao">
+          <div class="folha-mini"><img src="/logo" alt=""><i></i><i></i><i></i><i></i><i></i></div>
+          <div>
+            <h2>Papel timbrado em branco</h2>
+            <p class="suave" style="margin-top:0">Cabeçalho com o logo e os dados da empresa, rodapé com endereço e marca d'água suave.</p>
+            <div class="linha">
+              <select id="tb-orientacao" style="width:auto"><option value="retrato">A4 retrato</option><option value="paisagem">A4 paisagem</option></select>
+              <select id="tb-paginas" style="width:auto"><option value="1">1 página</option><option value="2">2 páginas</option><option value="5">5 páginas</option><option value="10">10 páginas</option></select>
+              <button class="btn" id="tb-gerar"><i data-ic="baixar"></i> Gerar PDF</button>
+            </div>
+          </div>
+        </div>
+        <div class="doc-grid">
+          <div class="cartao">
+            <div class="cartao-cab"><h3 style="margin:0">Documentos salvos</h3><button class="btn peq" id="doc-novo"><i data-ic="mais"></i> Novo</button></div>
+            <div class="busca" style="margin-bottom:.8em"><i data-ic="busca"></i><input type="search" id="doc-busca" placeholder="Buscar…"></div>
+            <div class="lista-docs" id="doc-lista"></div>
+          </div>
+          <div class="cartao">
+            <form id="doc-form">
+              <div class="grade-form">
+                <div class="inteiro">
+                  <label class="rotulo" for="doc-modelo">Começar a partir de um modelo</label>
+                  <select id="doc-modelo"><option value="">— em branco —</option></select>
+                </div>
+                <div class="inteiro"><label class="rotulo" for="doc-titulo">Título</label><input type="text" id="doc-titulo" required placeholder="Ex.: Contrato de prestação de serviços"></div>
+                <div class="inteiro"><label class="rotulo" for="doc-dest">Destinatário <small>(opcional)</small></label><textarea id="doc-dest" style="min-height:3.5em" placeholder="Ao(À) Sr(a). …"></textarea></div>
+                <div class="inteiro"><label class="rotulo" for="doc-corpo">Texto <small>(deixe uma linha em branco entre os parágrafos)</small></label><textarea id="doc-corpo" style="min-height:16em"></textarea></div>
+                <div><label class="rotulo" for="doc-local">Local e data <small>(vazio = data de hoje)</small></label><input type="text" id="doc-local" placeholder="São Paulo, 6 de outubro de 2026"></div>
+                <div><label class="rotulo" for="doc-ass">Assinatura <small>(nome na 1ª linha, cargo na 2ª)</small></label><textarea id="doc-ass" style="min-height:3.5em"></textarea></div>
+              </div>
+              <div class="linha fim" style="margin-top:1.2em">
+                <button type="button" class="btn perigo" id="doc-excluir" hidden><i data-ic="lixo"></i> Excluir</button>
+                <button type="button" class="btn sec" id="doc-previa"><i data-ic="olho"></i> Pré-visualizar PDF</button>
+                <button type="submit" class="btn"><i data-ic="check"></i> Salvar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

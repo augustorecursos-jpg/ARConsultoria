@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>AR Consultoria · Entrar</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <main class="login">
+    <section class="marca-lado">
+      <div class="logo-cartao"><img src="/logo" alt="AR Consultoria"></div>
+      <h1>Seu negócio de consultoria, do <em>portfólio</em> ao caixa.</h1>
+      <p>Portfólio sempre atualizado, funil comercial, propostas, projetos e financeiro da AR Consultoria em um só lugar.</p>
+      <ul class="recursos">
+        <li><span class="bolha"><i data-ic="livro"></i></span><div><b>Portfólio em PDF</b><small>Serviços, Vértice e projetos, personalizado para cada cliente</small></div></li>
+        <li><span class="bolha"><i data-ic="funil"></i></span><div><b>Leads e propostas</b><small>Do primeiro contato à proposta aprovada, com PDF timbrado</small></div></li>
+        <li><span class="bolha"><i data-ic="dinheiro"></i></span><div><b>Projetos e financeiro</b><small>Prazos, entregas, contas a receber e a pagar</small></div></li>
+      </ul>
+    </section>
+    <section class="form-lado">
+      <div class="caixa">
+        <h2>Boas-vindas!</h2>
+        <p class="suave" style="margin:0">Entre com seu usuário e senha para continuar.</p>
+        <form id="form-login">
+          <div>
+            <label class="rotulo" for="login">Usuário</label>
+            <input type="text" id="login" autocomplete="username" required autofocus>
+          </div>
+          <div>
+            <label class="rotulo" for="senha">Senha</label>
+            <input type="password" id="senha" autocomplete="current-password" required>
+          </div>
+          <p class="erro" id="erro" role="alert"></p>
+          <button class="btn" type="submit">Entrar <i data-ic="dir"></i></button>
+        </form>
+        <p class="rodape-login"><i data-ic="cadeado"></i> Acesso restrito · AR Consultoria</p>
+      </div>
+    </section>
+  </main>
+  <script src="js/comum.js"></script>
+  <script>
+    // Já logado? vai direto para o sistema.
+    fetch('/api/eu').then((r) => r.ok && (location.href = '/app'));
+    $('#form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      $('#erro').textContent = '';
+      const btn = e.submitter; btn.disabled = true;
+      try {
+        await api('/api/login', { method: 'POST', body: { login: $('#login').value, senha: $('#senha').value } });
+        location.href = '/app';
+      } catch (err) {
+        $('#erro').textContent = err.message;
+      } finally { btn.disabled = false; }
+    });
+  </script>
+</body>
+</html>

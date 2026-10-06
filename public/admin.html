@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>AR Consultoria · Administração</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<div class="app">
+  <aside class="lateral">
+    <div class="marca"><img src="/logo" alt="AR Consultoria"></div>
+    <nav id="menu">
+      <div class="grupo">Administração</div>
+      <a href="#usuarios" data-secao="usuarios"><i data-ic="usuarios"></i> Usuários</a>
+      <a href="#empresa" data-secao="empresa"><i data-ic="etiqueta"></i> Empresa e timbrado</a>
+      <a href="#auditoria" data-secao="auditoria"><i data-ic="relogio"></i> Auditoria</a>
+      <a href="#sistema" data-secao="sistema"><i data-ic="banco"></i> Sistema e backup</a>
+      <div class="grupo">Sistema</div>
+      <a href="/app"><i data-ic="voltar"></i> Voltar ao sistema</a>
+    </nav>
+    <div class="cartao-usuario">
+      <span class="av" id="av-usuario"></span>
+      <div><b id="nome-usuario"></b><small>Administrador</small></div>
+      <button id="btn-sair" title="Sair"><i data-ic="sair"></i></button>
+    </div>
+  </aside>
+
+  <div class="principal">
+    <header class="topo">
+      <div class="ola"><b>Área do administrador</b><small>Controle de acesso, identidade visual e segurança dos dados</small></div>
+      <span class="tag info"><i data-ic="escudo"></i> Acesso restrito</span>
+    </header>
+    <main class="conteudo">
+      <section data-secao="usuarios" hidden>
+<div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div><span class="selo"><i data-ic="usuarios"></i> Acesso</span><h1>Usuários</h1><p><b>Administrador</b> acessa tudo, inclusive esta área. <b>Operador</b> usa o sistema: portfólio, leads, clientes, propostas, projetos, financeiro e documentos.</p></div>
+          <div class="acoes"><button class="btn" id="u-novo"><i data-ic="mais"></i> Novo usuário</button></div>
+        </div>
+        <div class="tabela-wrap" id="u-tabela"></div>
+      </section>
+
+      <section data-secao="empresa" hidden>
+<div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div><span class="selo"><i data-ic="etiqueta"></i> Identidade</span><h1>Empresa e papel timbrado</h1><p>Logo e dados usados no portfólio, nas propostas e no cabeçalho e rodapé de todos os PDFs.</p></div>
+          <div class="acoes"><button class="btn sec" id="emp-previa"><i data-ic="olho"></i> Ver papel timbrado</button></div>
+        </div>
+        <div class="cartao">
+          <div class="cartao-cab"><h2><span class="bolha ciano"><i data-ic="imagem"></i></span> Logo</h2></div>
+          <div class="linha" style="align-items:flex-start;gap:1.2em">
+            <img src="/logo" id="logo-prev" alt="Logo atual" class="logo-preview">
+            <div>
+              <p class="suave" style="margin-top:0">PNG ou JPG, até 3 MB. Para um timbrado mais nítido, use uma imagem com pelo menos 600 px de largura.</p>
+              <div class="linha">
+                <label class="btn"><input type="file" id="logo-arq" accept="image/png,image/jpeg" hidden><i data-ic="enviar"></i> Trocar logo</label>
+                <button class="btn perigo" id="logo-padrao"><i data-ic="voltar"></i> Restaurar logo padrão</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao">
+          <div class="cartao-cab"><h2><span class="bolha"><i data-ic="documento"></i></span> Dados do timbrado</h2></div>
+          <form id="f-empresa" class="grade-form">
+            <div><label class="rotulo">Nome da empresa</label><input type="text" name="empresa_nome"></div>
+            <div><label class="rotulo">Subtítulo</label><input type="text" name="empresa_subtitulo"></div>
+            <div><label class="rotulo">CNPJ</label><input type="text" name="empresa_cnpj"></div>
+            <div><label class="rotulo">Telefone</label><input type="text" name="empresa_telefone"></div>
+            <div><label class="rotulo">E-mail</label><input type="text" name="empresa_email"></div>
+            <div><label class="rotulo">Site</label><input type="text" name="empresa_site"></div>
+            <div class="inteiro"><label class="rotulo">Endereço (rodapé)</label><input type="text" name="empresa_endereco"></div>
+            <div class="inteiro"><label class="rotulo">Texto extra do rodapé</label><input type="text" name="rodape_extra"></div>
+            <div><label class="rotulo">Responsável <small>(assina propostas)</small></label><input type="text" name="responsavel_nome"></div>
+            <div><label class="rotulo">Cargo do responsável</label><input type="text" name="responsavel_cargo"></div>
+            <div class="inteiro"><h3 style="margin:.6em 0 0">Propostas</h3></div>
+            <div class="inteiro"><label class="rotulo">Condições de pagamento padrão</label><textarea name="proposta_condicoes" style="min-height:4em"></textarea></div>
+            <div><label class="rotulo">Validade padrão da proposta <small>(dias)</small></label><input type="text" name="proposta_validade_dias" inputmode="numeric"></div>
+            <div class="inteiro"><h3 style="margin:.6em 0 0">Listas de sugestões <small class="suave">(separadas por vírgula)</small></h3></div>
+            <div class="inteiro"><label class="rotulo">Categorias de receita</label><input type="text" name="categorias_receita"></div>
+            <div class="inteiro"><label class="rotulo">Categorias de despesa</label><input type="text" name="categorias_despesa"></div>
+            <div class="inteiro"><label class="rotulo">Segmentos de clientes</label><input type="text" name="segmentos"></div>
+          </form>
+          <div class="linha fim" style="margin-top:1em">
+            <button class="btn" form="f-empresa"><i data-ic="check"></i> Salvar</button>
+          </div>
+        </div>
+      </section>
+
+      <section data-secao="auditoria" hidden>
+<div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div><span class="selo"><i data-ic="relogio"></i> Segurança</span><h1>Auditoria</h1><p>Registro de quem fez o quê no sistema: logins, portfólios gerados, propostas, financeiro e documentos.</p></div>
+          <div class="acoes"><button class="btn sec" id="aud-xlsx"><i data-ic="planilha"></i> Excel</button></div>
+        </div>
+        <div class="barra-ferr"><div class="busca cresce" style="max-width:420px"><i data-ic="busca"></i><input type="search" id="aud-busca" placeholder="Filtrar por usuário, ação ou detalhe…"></div></div>
+        <div class="tabela-wrap" id="aud-tabela"></div>
+      </section>
+
+      <section data-secao="sistema" hidden>
+<div class="hero">
+          <img class="deco" src="img/marca.png" alt="">
+          <div><span class="selo"><i data-ic="banco"></i> Dados</span><h1>Sistema e backup</h1><p>Números gerais e cópia de segurança do banco de dados.</p></div>
+          <div class="acoes"><a class="btn" href="/api/admin/backup"><i data-ic="baixar"></i> Baixar backup</a></div>
+        </div>
+        <div class="cards" id="sis-kpis"></div>
+        <div class="cartao">
+          <div class="cartao-cab"><h2><span class="bolha verde"><i data-ic="escudo"></i></span> Backup</h2></div>
+          <p style="margin-top:0">Baixa uma cópia completa do banco de dados (clientes, leads, propostas, projetos, financeiro, portfólio, documentos e usuários). Guarde em local seguro — recomendamos uma vez por semana. Logo e prints do portfólio ficam na pasta de dados do servidor (incluídos no snapshot do disco).</p>
+          <a class="btn sec" href="/api/admin/backup"><i data-ic="baixar"></i> Baixar backup agora</a>
+        </div>
+        <p class="suave" id="sis-info"></p>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

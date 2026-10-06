@@ -1,0 +1,21 @@
+{
+  "name": "ar-consultoria",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AR Consultoria - site institucional (serviços, Vértice e portfólio) e sistema de gestão: leads, clientes, propostas em PDF, projetos e financeiro",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "dev": "node --no-warnings --watch server.js",
+    "test": "node --no-warnings --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "pdf-lib": "^1.17.1"
+  }
+}
