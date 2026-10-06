@@ -50,13 +50,16 @@ A4 paisagem, nesta ordem (cada parte pode ser ligada/desligada ao gerar):
 
 Na primeira execução o sistema já vem com:
 - os 5 serviços do portfólio do Augusto (consultoria financeira, painéis, automações, aplicativos e treinamentos) e os textos de “Sobre mim”;
-- **Vértice** (aplicativo, destaque);
+- **Vértice 2.0** (aplicativo, destaque) — a versão nova do repositório `Vertice_Final`: login por conta criada pelo administrador,
+  dados no servidor sincronizados entre dispositivos, vencimentos, parcelas, visão anual e PWA;
 - **Fechamento de folhas e produtividade** — case da cliente **Hessel Domiciliar** (cliente cadastrada com o logo);
 - **Trilha de Desenvolvimento (DHO)** e **Portal de Reembolsos** — projetos desenvolvidos na Âmbar Energia (a Âmbar não é cadastrada como cliente).
 
 Os prints em `assets/vitrine/` foram tirados dos próprios sistemas rodando com **dados de demonstração** (nomes e valores fictícios);
 dá para trocar por outros a qualquer momento no botão de imagem de cada item.
 O link do Vértice publicado não foi preenchido (fica em Portfólio → Vértice → Editar → “Link para acessar”).
+Bancos criados antes da troca são atualizados sozinhos para o Vértice 2.0 na próxima inicialização (textos, links e prints),
+desde que o item ainda aponte para o repositório antigo.
 
 ## Como rodar
 

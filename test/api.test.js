@@ -50,6 +50,7 @@ test('conteúdo inicial do portfólio: Vértice, case da Hessel e projetos da Â
   const vitrine = (await req('GET', '/api/vitrine')).dados;
   const nomes = vitrine.map((v) => v.nome);
   assert.ok(nomes.includes('Vértice'));
+  assert.match(vitrine.find((v) => v.nome === 'Vértice').link_repo, /Vertice_Final$/);
   assert.ok(nomes.includes('Trilha de Desenvolvimento (DHO)'));
   assert.ok(nomes.includes('Portal de Reembolsos'));
   assert.strictEqual(vitrine.find((v) => v.nome === 'Fechamento de folhas e produtividade').cliente, 'Hessel Domiciliar');

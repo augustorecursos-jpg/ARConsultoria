@@ -246,28 +246,49 @@ function copiarImagem(origem, destinoSemExt) {
   if (fs.existsSync(arq)) fs.copyFileSync(arq, path.join(DATA_DIR, `${destinoSemExt}${path.extname(arq)}`));
 }
 
+// Vértice 2.0 (repositório Vertice_Final): substitui a versão antiga do app de finanças.
+const VERTICE = {
+  nome: 'Vértice',
+  slogan: 'Suas finanças no ponto mais alto de clareza',
+  descricao: 'Aplicativo web de gestão financeira pessoal com a identidade da AR Consultoria. Cada pessoa tem login próprio e acompanha contas do mês, vencimentos, parcelas, recorrências e a visão do ano inteiro. Os dados ficam no servidor e sincronizam entre celular e computador; as contas de acesso são criadas e controladas por um administrador, que não enxerga os lançamentos de ninguém.',
+  recursos: [
+    'Mês: saldo previsto e realizado, falta pagar, receitas e investimentos, com filtros, busca e desfazer',
+    'Vencimentos destacados: atrasados, vence hoje e próximos dias',
+    'Recorrência mensal e parcelamento com valores em centavos (as parcelas fecham o total exato)',
+    'Visão anual: gráfico de entradas × saídas, consolidado por categoria e saldo acumulado',
+    'Dados no servidor, sincronizados entre dispositivos e sem sobrescrever alterações simultâneas',
+    'Contas criadas pelo administrador: senha temporária, bloqueio na hora e redefinição de senha',
+    'Privacidade: o administrador gerencia contas, mas não vê os lançamentos',
+    'Exportação em JSON e CSV, importação (inclusive do Vértice antigo) e instalação no celular (PWA)',
+  ].join('\n'),
+  publico: 'Pessoas e famílias que querem controlar as contas do mês e enxergar o ano',
+  link_repo: 'https://github.com/augustorecursos-jpg/Vertice_Final',
+  tecnologias: 'Node.js, SQLite, HTML/CSS/JavaScript, PWA',
+};
+
 if (!db.prepare('SELECT COUNT(*) n FROM vitrine').get().n) {
   const vertice = db.prepare(`INSERT INTO vitrine (nome, tipo, slogan, descricao, recursos, publico, link, link_repo, tecnologias, destaque, ordem)
-    VALUES (?, 'aplicativo', ?, ?, ?, ?, ?, ?, ?, 1, 1)`).run(
-    'Vértice',
-    'Gestão financeira de alto padrão',
-    'O Vértice organiza receitas, despesas, investimentos e poupança mês a mês, mostra quanto já foi pago e quanto falta pagar e consolida tudo em uma visão anual por categoria. Visual moderno, rápido e pensado para quem quer controle sem planilhas complicadas.',
-    [
-      'Painel do mês: total recebido, patrimônio, contas a pagar, contas pagas, falta pagar e saldo líquido',
-      'Lançamentos por categoria: despesa fixa, despesa variável, investimento, poupança e renda',
-      'Recorrência automática: lançamento único, repetição mensal ou parcelamento em N vezes',
-      'Marcar contas como pagas e ordenar por data ou valor',
-      'Visão anual consolidada por categoria, com detalhamento de cada lançamento',
-      'Acesso com login e cadastro de usuário',
-    ].join('\n'),
-    'Pessoas e pequenos negócios que querem controlar o fluxo de caixa',
-    '',
-    'https://github.com/augustorecursos-jpg/App_Vertice_Gest-o_Financeira',
-    'HTML, Tailwind CSS, JavaScript',
-  );
-  // Prints reais do Vértice (com dados de exemplo).
+    VALUES (?, 'aplicativo', ?, ?, ?, ?, '', ?, ?, 1, 1)`).run(VERTICE.nome, VERTICE.slogan, VERTICE.descricao, VERTICE.recursos,
+    VERTICE.publico, VERTICE.link_repo, VERTICE.tecnologias);
+  // Prints reais do Vértice 2.0 (com dados de exemplo).
   copiarImagem('vitrine/vertice-1.jpg', `vitrine-${Number(vertice.lastInsertRowid)}-1`);
   copiarImagem('vitrine/vertice-2.jpg', `vitrine-${Number(vertice.lastInsertRowid)}-2`);
+  db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('vertice_v2', '1')").run();
+}
+
+// Bancos criados com o Vértice antigo: atualiza textos, links e prints para o Vértice 2.0 (uma única vez).
+// Só mexe no item que ainda aponta para o repositório antigo, para não desfazer edições feitas no sistema.
+if (!db.prepare("SELECT 1 FROM config WHERE chave = 'vertice_v2'").get()) {
+  const antigo = db.prepare("SELECT id FROM vitrine WHERE link_repo LIKE '%App_Vertice_Gest-o_Financeira%'").get();
+  if (antigo) {
+    db.prepare(`UPDATE vitrine SET slogan = ?, descricao = ?, recursos = ?, publico = ?, link_repo = ?, tecnologias = ?,
+      atualizado_em = datetime('now') WHERE id = ?`).run(VERTICE.slogan, VERTICE.descricao, VERTICE.recursos, VERTICE.publico,
+      VERTICE.link_repo, VERTICE.tecnologias, antigo.id);
+    for (const n of [1, 2]) for (const ext of ['png', 'jpg']) fs.rmSync(path.join(DATA_DIR, `vitrine-${antigo.id}-${n}.${ext}`), { force: true });
+    copiarImagem('vitrine/vertice-1.jpg', `vitrine-${antigo.id}-1`);
+    copiarImagem('vitrine/vertice-2.jpg', `vitrine-${antigo.id}-2`);
+  }
+  db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('vertice_v2', '1')").run();
 }
 
 // Cases e projetos iniciais (só na primeira execução): Hessel Domiciliar (cliente) e projetos desenvolvidos na Âmbar Energia.
