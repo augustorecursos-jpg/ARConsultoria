@@ -493,6 +493,24 @@ table.itens-prop td[data-total] { padding-top: .9em; font-weight: 700; }
 .barra.receita > span { background: linear-gradient(90deg, var(--ciano), var(--primaria)); }
 .barra.despesa > span { background: #9aaabd; }
 
+/* central de sistemas */
+.grade-sistemas { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1em; transition: opacity .2s; }
+.grade-sistemas.verificando { opacity: .65; }
+.cartao.sistema { margin: 0; display: flex; flex-direction: column; border-top: 4px solid var(--borda-forte); }
+.cartao.sistema.online { border-top-color: var(--verde); }
+.cartao.sistema.offline, .cartao.sistema.erro { border-top-color: var(--vermelho); }
+.cartao.sistema.pendente { border-top-color: var(--ambar); }
+.cartao.sistema .tipo { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--ciano-700); }
+.cartao.sistema h3 { margin: .5em 0 .2em; }
+.cartao.sistema .endereco { display: block; font-size: .84rem; font-weight: 700; color: var(--primaria); overflow-wrap: anywhere; margin-bottom: .7em; }
+.cartao.sistema p.endereco { font-weight: 400; color: var(--suave); }
+.cartao.sistema .acesso { font-size: .8rem; margin: .6em 0 0; display: flex; gap: .4em; align-items: center; }
+.dados-si { display: grid; grid-template-columns: 1fr 1fr; gap: .5em; border-top: 1px dashed var(--borda); padding-top: .6em; }
+.dados-si small { display: block; font-size: .72rem; }
+.dados-si b { font-size: .88rem; }
+.aviso-box.erro { background: var(--vermelho-100); color: #8a2a22; border: 1px solid #f0cfca; }
+.lateral nav a .cont.alerta { background: var(--vermelho); }
+
 @media (max-width: 920px) { .kanban { grid-template-columns: repeat(5, 240px); } }
 
 @media print {

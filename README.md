@@ -21,6 +21,11 @@ Identidade visual tirada do logo da AR: marinho `#17397d`, azul `#005ea4`, ciano
     quando não é cliente.
   - **Serviços**: catálogo com resumo, ícone, preço base e ordem (também usado nas propostas).
   - **Capa, sobre mim e contato**: textos, anos de experiência, empresas, habilidades e redes.
+- **Central de sistemas**: as plataformas desenvolvidas (Vértice 2.0, Hessel, Trilha DHO, Portal de Reembolsos) em cartões,
+  com o endereço publicado, link direto para a área de administração e a situação de cada uma (no ar, fora do ar, sem endereço).
+  O servidor da AR consulta `<endereço>/healthz` de cada sistema ao abrir a tela, no botão “Verificar agora” e a cada 15 minutos;
+  sistemas fora do ar aparecem em vermelho no menu e em um aviso no Painel. **Nenhuma senha é guardada**: o acesso continua
+  com o login de cada sistema. Todos veem a central; só o administrador cadastra, edita e remove.
 - **Leads**: quadro por etapa (novo → em contato → proposta enviada → ganho/perdido), com arrastar e soltar, valor estimado,
   próximo contato, WhatsApp, “converter em cliente”, “criar proposta” e “portfólio para este lead”.
 - **Clientes**: cadastro, importação do Excel, exportação Excel/PDF, logo do cliente e a opção de aparecer em “Clientes atendidos”.

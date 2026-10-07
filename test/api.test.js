@@ -7,7 +7,8 @@ const path = require('node:path');
 
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ar-teste-'));
 process.env.ADMIN_PASSWORD = 'senha-de-teste';
-const { app, numero, somarMeses } = require('../server');
+const http = require('node:http');
+const { app, numero, somarMeses, urlBase } = require('../server');
 
 let servidor, base, cookie = '';
 before(() => new Promise((ok) => { servidor = app.listen(0, () => { base = `http://localhost:${servidor.address().port}`; ok(); }); }));
@@ -112,10 +113,47 @@ test('cliente com histórico é inativado, não excluído', async () => {
   assert.deepStrictEqual(r.dados, { inativado: true });
 });
 
+test('endereços aceitos na central de sistemas', () => {
+  assert.strictEqual(urlBase('meusistema.onrender.com/'), 'https://meusistema.onrender.com');
+  assert.strictEqual(urlBase('http://localhost:4101/app/'), 'http://localhost:4101/app');
+  assert.strictEqual(urlBase('javascript:alert(1)'), null);
+  assert.strictEqual(urlBase('ftp://exemplo.com'), null);
+  assert.strictEqual(urlBase(''), null);
+});
+
+test('central de sistemas: cadastro inicial e verificação de "no ar"', async () => {
+  const lista = (await req('GET', '/api/sistemas')).dados;
+  assert.deepStrictEqual(lista.map((x) => x.nome), ['Vértice 2.0', 'Hessel · Fechamento de folhas', 'Trilha de Desenvolvimento (DHO)', 'Portal de Reembolsos']);
+  assert.ok(lista.every((x) => !x.url));
+
+  // Um "sistema" de mentira no ar e outro desligado.
+  const fake = http.createServer((q, r) => { r.statusCode = q.url === '/healthz' ? 200 : 404; r.end('ok'); });
+  await new Promise((ok) => fake.listen(0, ok));
+  const porta = fake.address().port;
+  try {
+    assert.strictEqual((await req('PUT', `/api/sistemas/${lista[0].id}`, { url: `http://localhost:${porta}` })).status, 200);
+    assert.strictEqual((await req('PUT', `/api/sistemas/${lista[1].id}`, { url: 'http://localhost:1' })).status, 200);
+    assert.strictEqual((await req('PUT', `/api/sistemas/${lista[2].id}`, { url: 'javascript:alert(1)' })).status, 400);
+    const r = (await req('POST', '/api/sistemas/verificar')).dados;
+    const por = Object.fromEntries(r.map((x) => [x.nome, x]));
+    assert.strictEqual(por['Vértice 2.0'].status, 'online');
+    assert.ok(por['Vértice 2.0'].online_em);
+    assert.strictEqual(por['Hessel · Fechamento de folhas'].status, 'offline');
+    assert.strictEqual(por['Portal de Reembolsos'].status, 'sem_endereco');
+    const painel = (await req('GET', '/api/painel')).dados;
+    assert.deepStrictEqual(painel.sistemasFora.map((x) => x.nome), ['Hessel · Fechamento de folhas']);
+  } finally {
+    fake.close();
+  }
+});
+
 test('operador não acessa a administração', async () => {
   await req('POST', '/api/admin/usuarios', { nome: 'Operador', login: 'op', senha: 'operador-123', perfil: 'operador' });
   await req('POST', '/api/logout');
   await req('POST', '/api/login', { login: 'op', senha: 'operador-123' });
   assert.strictEqual((await req('GET', '/api/admin/usuarios')).status, 403);
   assert.strictEqual((await req('PUT', '/api/portfolio/config', { portfolio_anos: '11+' })).status, 200);
+  // Operador vê a central de sistemas, mas não cadastra nem altera.
+  assert.strictEqual((await req('GET', '/api/sistemas')).status, 200);
+  assert.strictEqual((await req('POST', '/api/sistemas', { nome: 'X', url: 'https://x.com' })).status, 403);
 });

@@ -89,6 +89,7 @@ function atualizarRotulosMes() {
 const CARREGADORES = {
   painel: carregarPainel,
   portfolio: carregarPortfolio,
+  sistemas: carregarSistemas,
   leads: carregarLeads,
   clientes: carregarClientes,
   propostas: carregarPropostas,
@@ -229,6 +230,10 @@ async function carregarPainel() {
     kpi({ rot: 'Recebido no mês', val: moedaCurta(f.recebido), icone: 'dinheiro', det: `faltam ${moeda(f.a_receber)}` }),
     kpi({ rot: 'Saldo do mês', val: moedaCurta(f.saldo), icone: 'grafico', cor: f.saldo < 0 ? 'ciano' : '', det: `despesas pagas ${moeda(f.pago)}` }),
   ].join('');
+
+  atualizarContadorSistemas(p.sistemasFora.length);
+  $('#painel-sistemas').innerHTML = !p.sistemasFora.length ? '' : `<div class="aviso-box erro">${ic('servidor')}<span><b>${p.sistemasFora.length === 1 ? 'Um sistema está fora do ar' : `${p.sistemasFora.length} sistemas estão fora do ar`}:</b>
+    ${p.sistemasFora.map((x) => esc(x.nome)).join(', ')}. <a href="#sistemas">Ver na central de sistemas</a></span></div>`;
 
   $('#painel-grafico').innerHTML = p.serie.some((s) => s.receitas || s.despesas) ? graficoBarras(p.serie)
     : vazio({ ilustra: 'calendario', titulo: 'Sem lançamentos ainda', texto: 'Registre receitas e despesas no Financeiro para ver a evolução aqui.' });
@@ -1309,3 +1314,118 @@ $('#doc-excluir').addEventListener('click', async () => {
   toast('Documento excluído.');
 });
 $('#tb-gerar').addEventListener('click', () => abrirPdf(`/api/pdf/timbrado?orientacao=${$('#tb-orientacao').value}&paginas=${$('#tb-paginas').value}`, undefined, 'Papel timbrado.pdf'));
+
+
+// ================= CENTRAL DE SISTEMAS =================
+const SISTEMA_STATUS = {
+  online: { rot: 'No ar', cor: 'ok' },
+  offline: { rot: 'Fora do ar', cor: 'erro' },
+  erro: { rot: 'Com erro', cor: 'erro' },
+  sem_endereco: { rot: 'Sem endereço', cor: 'neutra' },
+  pendente: { rot: 'Não verificado', cor: 'aviso' },
+};
+let sistemas = [];
+
+function atualizarContadorSistemas(n) {
+  $('#cont-sistemas').textContent = n;
+  $('#cont-sistemas').hidden = !n;
+  $('#cont-sistemas').classList.add('alerta');
+}
+
+const statusSistema = (x) => (!x.url ? 'sem_endereco' : !x.monitorar ? null : x.status && x.status !== 'sem_endereco' ? x.status : 'pendente');
+const linkAdmin = (x) => (x.url ? x.url + (x.caminho_admin || '/') : '');
+
+async function carregarSistemas() {
+  $('#si-novo').hidden = estado.eu.perfil !== 'admin';
+  sistemas = await api('/api/sistemas');
+  desenharSistemas();
+  // Verifica na hora ao abrir a tela (a lista atualiza quando a verificação termina).
+  if (sistemas.some((x) => x.url && x.monitorar)) verificarSistemas(true);
+}
+
+async function verificarSistemas(silencioso = false) {
+  const b = $('#si-verificar');
+  b.disabled = true;
+  $('#si-lista').classList.add('verificando');
+  try {
+    sistemas = await api('/api/sistemas/verificar', { method: 'POST' });
+    desenharSistemas();
+    if (!silencioso) toast('Verificação concluída.');
+  } catch (e) { toast(e.message, true); } finally { b.disabled = false; $('#si-lista').classList.remove('verificando'); }
+}
+
+function desenharSistemas() {
+  const sts = sistemas.map(statusSistema);
+  const fora = sts.filter((x) => x === 'offline' || x === 'erro').length;
+  atualizarContadorSistemas(fora);
+  $('#si-kpis').innerHTML = [
+    kpi({ rot: 'Sistemas', val: sistemas.length, icone: 'servidor', cor: 'indigo' }),
+    kpi({ rot: 'No ar', val: sts.filter((x) => x === 'online').length, icone: 'check' }),
+    kpi({ rot: 'Fora do ar', val: fora, icone: 'alerta', cor: fora ? 'ciano' : '', det: fora ? 'veja os cartões abaixo' : 'tudo certo' }),
+    kpi({ rot: 'Sem endereço', val: sts.filter((x) => x === 'sem_endereco').length, icone: 'link', cor: 'ambar', det: 'cadastre o link publicado' }),
+  ].join('');
+  const admin = estado.eu.perfil === 'admin';
+  $('#si-lista').innerHTML = !sistemas.length
+    ? `<div class="cartao" style="grid-column:1/-1">${vazio({ ilustra: 'documento', titulo: 'Nenhum sistema cadastrado', texto: 'Cadastre as plataformas publicadas para acompanhar tudo daqui.' })}</div>`
+    : sistemas.map((x) => {
+      const st = statusSistema(x);
+      const ultima = x.verificado_em ? `verificado ${esc(dataBR(x.verificado_em))}` : '';
+      return `<div class="cartao sistema ${st || ''}">
+        <div class="linha entre"><span class="tipo">${esc(x.cliente || '')}</span>${st ? tag(SISTEMA_STATUS, st) : '<span class="tag neutra">Sem monitoramento</span>'}</div>
+        <h3>${esc(x.nome)}</h3>
+        ${x.descricao ? `<p class="suave" style="margin:0 0 .6em">${esc(x.descricao)}</p>` : ''}
+        ${x.url ? `<a class="endereco" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.url.replace(/^https?:\/\//, ''))}</a>`
+          : `<p class="suave endereco">${admin ? 'Informe o endereço publicado em Editar.' : 'Endereço ainda não cadastrado.'}</p>`}
+        <div class="dados-si">
+          <div><small>Resposta</small><b>${x.latencia_ms && st === 'online' ? `${x.latencia_ms} ms` : '—'}</b></div>
+          <div><small>Último “no ar”</small><b>${x.online_em ? esc(dataBR(x.online_em)) : '—'}</b></div>
+        </div>
+        ${x.erro && st !== 'online' ? `<p class="txt-erro" style="font-size:.82rem;margin:.5em 0 0">${ic('alerta')} ${esc(x.erro)}</p>` : ''}
+        ${x.acesso ? `<p class="suave acesso">${ic('chave')} ${esc(x.acesso)}</p>` : ''}
+        <div class="linha" style="margin-top:auto;padding-top:.8em">
+          ${x.url ? `<a class="btn peq" href="${esc(linkAdmin(x))}" target="_blank" rel="noopener noreferrer">${ic('escudo')} Abrir administração</a>
+            <a class="btn sec peq" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${ic('externo')} Abrir sistema</a>` : ''}
+          <span class="cresce"></span>
+          ${admin ? `<button class="btn fantasma peq" data-editar-si="${x.id}">${ic('editar')} Editar</button>` : ''}
+        </div>
+        <small class="suave" style="margin-top:.5em;font-size:.74rem">${ultima}</small>
+      </div>`;
+    }).join('');
+  $$('#si-lista [data-editar-si]').forEach((b) => b.addEventListener('click', () => editarSistema(sistemas.find((x) => x.id === Number(b.dataset.editarSi)))));
+  $('#si-info').textContent = 'O servidor da AR consulta o endereço /healthz de cada sistema ao abrir esta tela, no botão “Verificar agora” e a cada 15 minutos.';
+}
+
+function editarSistema(item = null) {
+  const campos = [
+    { k: 'nome', rot: 'Nome', obrig: true },
+    { k: 'cliente', rot: 'Cliente / empresa', lista: [...new Set([...estado.clientes.map((c) => c.nome), 'AR Consultoria', 'Âmbar Energia'])] },
+    { k: 'url', rot: 'Endereço publicado', placeholder: 'https://meusistema.onrender.com', inteiro: true },
+    { k: 'caminho_admin', rot: 'Página de administração', ajuda: 'caminho depois do endereço', placeholder: '/admin' },
+    { k: 'ordem', rot: 'Ordem', tipo: 'numero', min: 0 },
+    { k: 'descricao', rot: 'Descrição curta', inteiro: true },
+    { k: 'acesso', rot: 'Como entrar como administrador', ajuda: 'dica — não coloque a senha', inteiro: true },
+    { k: 'observacoes', rot: 'Observações', tipo: 'area', alt: 3, inteiro: true },
+    { k: 'monitorar', rot: 'Monitoramento', tipo: 'check', texto: 'Verificar se está no ar', padrao: 1 },
+  ];
+  formModal({
+    titulo: item ? item.nome : 'Novo sistema', campos, item: item || { monitorar: 1, ordem: sistemas.length + 1 },
+    topo: '<p class="suave" style="margin-top:-.4em">Não guarde senhas aqui. Cada sistema continua com o próprio login.</p>',
+    aoSalvar: async (d) => {
+      if (item) await api(`/api/sistemas/${item.id}`, { method: 'PUT', body: d });
+      else await api('/api/sistemas', { method: 'POST', body: d });
+      toast('Sistema salvo.');
+      sistemas = await api('/api/sistemas');
+      desenharSistemas();
+    },
+    aoExcluir: item && (async () => {
+      if (!await confirmar(`Remover "${item.nome}" da central? O sistema em si não é afetado.`, { botao: 'Remover', perigo: true })) return false;
+      await api(`/api/sistemas/${item.id}`, { method: 'DELETE' });
+      toast('Removido da central.');
+      sistemas = await api('/api/sistemas');
+      desenharSistemas();
+    }),
+  });
+}
+
+$('#si-verificar').addEventListener('click', () => verificarSistemas());
+$('#si-novo').addEventListener('click', () => editarSistema());

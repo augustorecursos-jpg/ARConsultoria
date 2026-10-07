@@ -16,6 +16,7 @@
       <div class="grupo">Visão geral</div>
       <a href="#painel" data-secao="painel"><i data-ic="casa"></i> Painel</a>
       <a href="#portfolio" data-secao="portfolio"><i data-ic="livro"></i> Portfólio</a>
+      <a href="#sistemas" data-secao="sistemas"><i data-ic="servidor"></i> Central de sistemas <span class="cont" id="cont-sistemas" hidden></span></a>
       <div class="grupo">Comercial</div>
       <a href="#leads" data-secao="leads"><i data-ic="funil"></i> Leads <span class="cont" id="cont-leads" hidden></span></a>
       <a href="#clientes" data-secao="clientes"><i data-ic="usuarios"></i> Clientes</a>
@@ -60,6 +61,7 @@
             <a class="btn sec" href="#propostas" data-nova-proposta><i data-ic="mais"></i> Nova proposta</a>
           </div>
         </div>
+        <div id="painel-sistemas"></div>
         <div class="aviso-box alerta" id="aviso-senha-padrao" hidden>
           <i data-ic="alerta"></i> <span>Você está usando a senha inicial do administrador. <a href="#" id="link-trocar-senha">Troque agora</a>.</span>
         </div>
@@ -147,6 +149,26 @@
               <button class="btn" type="submit"><i data-ic="check"></i> Salvar textos</button></div>
           </form>
         </div>
+      </section>
+
+      <!-- ================= CENTRAL DE SISTEMAS ================= -->
+      <section data-secao="sistemas" hidden>
+        <div class="hero hero-escuro">
+          <img class="deco" src="img/marca.png" alt="">
+          <div>
+            <span class="selo"><i data-ic="servidor"></i> Plataformas</span>
+            <h1>Central de sistemas</h1>
+            <p>Os sistemas que você desenvolveu, em um só lugar: veja se estão no ar e abra a área de administração de cada um.
+              O acesso continua com o login de cada sistema — nenhuma senha fica guardada aqui.</p>
+          </div>
+          <div class="acoes">
+            <button class="btn branco" id="si-verificar"><i data-ic="repetir"></i> Verificar agora</button>
+            <button class="btn sec" id="si-novo" hidden><i data-ic="mais"></i> Novo sistema</button>
+          </div>
+        </div>
+        <div class="cards" id="si-kpis"></div>
+        <div class="grade-sistemas" id="si-lista"></div>
+        <p class="suave" id="si-info" style="font-size:.84rem"></p>
       </section>
 
       <!-- ================= LEADS ================= -->

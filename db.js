@@ -149,6 +149,29 @@ CREATE TABLE IF NOT EXISTS lancamentos (
   atualizado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Central de sistemas: plataformas publicadas (Hessel, Vértice, Trilha, Reembolsos…) com links e verificação de "no ar".
+-- Nenhuma senha é guardada aqui: o acesso continua sendo feito com o login de cada sistema.
+CREATE TABLE IF NOT EXISTS sistemas (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome        TEXT NOT NULL,
+  cliente     TEXT,
+  descricao   TEXT,
+  url         TEXT,
+  caminho_admin TEXT,
+  acesso      TEXT,
+  observacoes TEXT,
+  ordem       INTEGER NOT NULL DEFAULT 0,
+  monitorar   INTEGER NOT NULL DEFAULT 1,
+  status      TEXT,
+  codigo_http INTEGER,
+  latencia_ms INTEGER,
+  verificado_em TEXT,
+  online_em   TEXT,
+  erro        TEXT,
+  criado_em   TEXT NOT NULL DEFAULT (datetime('now')),
+  atualizado_em TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS documentos (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   titulo      TEXT NOT NULL,
@@ -289,6 +312,18 @@ if (!db.prepare("SELECT 1 FROM config WHERE chave = 'vertice_v2'").get()) {
     copiarImagem('vitrine/vertice-2.jpg', `vitrine-${antigo.id}-2`);
   }
   db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('vertice_v2', '1')").run();
+}
+
+// Central de sistemas: as plataformas já desenvolvidas, sem endereço (preenchido quando cada uma estiver publicada).
+if (!db.prepare("SELECT 1 FROM config WHERE chave = 'seed_sistemas'").get()) {
+  const ins = db.prepare('INSERT INTO sistemas (nome, cliente, descricao, caminho_admin, acesso, ordem) VALUES (?, ?, ?, ?, ?, ?)');
+  [
+    ['Vértice 2.0', 'AR Consultoria', 'Gestão financeira pessoal', '/', 'Login de administrador → menu Usuários'],
+    ['Hessel · Fechamento de folhas', 'Hessel Domiciliar', 'Fechamento de folhas e produtividade', '/admin', 'Usuário administrador do sistema'],
+    ['Trilha de Desenvolvimento (DHO)', 'Âmbar Energia', 'Treinamento de colaboradores', '/admin.html', 'Senha da área do RH (ADMIN_PASSWORD)'],
+    ['Portal de Reembolsos', 'Âmbar Energia', 'Reembolsos de benefícios do RH', '/admin.html', 'Usuário do RH com perfil Administrador'],
+  ].forEach((x, i) => ins.run(...x, i + 1));
+  db.prepare("INSERT INTO config (chave, valor) VALUES ('seed_sistemas', '1')").run();
 }
 
 // Cases e projetos iniciais (só na primeira execução): Hessel Domiciliar (cliente) e projetos desenvolvidos na Âmbar Energia.

@@ -616,6 +616,7 @@ app.get('/api/painel', exigirLogin, (req, res) => {
       LEFT JOIN clientes c ON c.id = p.cliente_id WHERE p.status IN ('andamento', 'planejado') ORDER BY p.prazo IS NULL, p.prazo LIMIT 6`).all(),
     vencimentos: db.prepare(`SELECT l.id, l.tipo, l.descricao, l.valor, l.vencimento, c.nome AS cliente_nome FROM lancamentos l
       LEFT JOIN clientes c ON c.id = l.cliente_id WHERE l.pago_em IS NULL AND l.vencimento <= ? ORDER BY l.vencimento LIMIT 8`).all(somarDias(hoje, 15)),
+    sistemasFora: db.prepare("SELECT id, nome, erro, online_em FROM sistemas WHERE monitorar = 1 AND status IN ('offline', 'erro') ORDER BY ordem").all(),
     hoje,
   });
 });
@@ -777,6 +778,115 @@ app.post('/api/pdf/tabela', exigirLogin, a(async (req, res) => {
   enviarPdf(res, bytes, `${tabela.titulo || 'tabela'}.pdf`);
 }));
 
+// ---------- central de sistemas ----------
+// Links para as plataformas publicadas e verificação de "no ar" (GET <url>/healthz feito pelo servidor).
+// Ver é para qualquer usuário; cadastrar, editar e excluir é só do administrador. Nenhuma senha é guardada.
+const TEMPO_VERIFICACAO_MS = 8000;
+const INTERVALO_VERIFICACAO_MS = 15 * 60e3;
+
+/** Aceita só http(s) e devolve a URL base sem barra final, ou null. */
+function urlBase(v) {
+  const t = texto(v, 300);
+  if (!t) return null;
+  // Outro protocolo (ftp://, javascript:, mailto:…) é recusado; "host:porta" sem protocolo vira https.
+  if (!/^https?:\/\//i.test(t) && /^[a-z][a-z0-9+.-]*:(?!\d)/i.test(t)) return null;
+  try {
+    const u = new URL(/^https?:\/\//i.test(t) ? t : `https://${t}`);
+    if (!['http:', 'https:'].includes(u.protocol) || !u.hostname) return null;
+    return `${u.origin}${u.pathname.replace(/\/+$/, '')}`;
+  } catch {
+    return null;
+  }
+}
+const caminhoAdmin = (v) => { const t = texto(v, 200); return t ? (t.startsWith('/') ? t : `/${t}`) : null; };
+
+function lerSistema(b) {
+  const url = urlBase(b?.url);
+  if (b?.url && String(b.url).trim() && !url) return { erro: 'Endereço inválido. Use algo como https://meusistema.onrender.com' };
+  const nome = texto(b?.nome, 120);
+  if (!nome) return { erro: 'Informe o nome do sistema.' };
+  return {
+    item: {
+      nome, url, cliente: texto(b?.cliente, 120), descricao: texto(b?.descricao, 200), caminho_admin: caminhoAdmin(b?.caminho_admin),
+      acesso: texto(b?.acesso, 200), observacoes: textoLongo(b?.observacoes, 2000),
+      ordem: Math.round(numero(b?.ordem) ?? 0), monitorar: b?.monitorar === false || b?.monitorar === 0 || b?.monitorar === '0' ? 0 : 1,
+    },
+  };
+}
+
+/** Consulta <url>/healthz e grava o resultado. */
+async function verificarSistema(s) {
+  if (!s.url) {
+    db.prepare("UPDATE sistemas SET status = 'sem_endereco', codigo_http = NULL, latencia_ms = NULL, erro = NULL WHERE id = ?").run(s.id);
+    return;
+  }
+  const inicio = Date.now();
+  let status, codigo = null, erro = null;
+  try {
+    const r = await fetch(`${s.url}/healthz`, { redirect: 'follow', signal: AbortSignal.timeout(TEMPO_VERIFICACAO_MS), headers: { 'User-Agent': 'AR-Consultoria-Central/1.0' } });
+    codigo = r.status;
+    await r.body?.cancel().catch(() => {});
+    status = r.ok ? 'online' : 'erro';
+    if (!r.ok) erro = `Respondeu com o código ${r.status}`;
+  } catch (e) {
+    status = 'offline';
+    erro = e.name === 'TimeoutError' ? `Sem resposta em ${TEMPO_VERIFICACAO_MS / 1000} s` : 'Não foi possível conectar';
+  }
+  db.prepare(`UPDATE sistemas SET status = ?, codigo_http = ?, latencia_ms = ?, erro = ?, verificado_em = datetime('now'),
+    online_em = CASE WHEN ? = 'online' THEN datetime('now') ELSE online_em END WHERE id = ?`)
+    .run(status, codigo, Date.now() - inicio, erro, status, s.id);
+}
+
+let verificando = null;
+/** Verifica todos os sistemas monitorados (em paralelo). Chamadas simultâneas reaproveitam a mesma rodada. */
+function verificarTodos() {
+  if (!verificando) {
+    const lista = db.prepare('SELECT * FROM sistemas WHERE monitorar = 1').all();
+    verificando = Promise.all(lista.map(verificarSistema)).finally(() => { verificando = null; });
+  }
+  return verificando;
+}
+
+const listaSistemas = () => db.prepare('SELECT * FROM sistemas ORDER BY ordem, nome COLLATE NOCASE').all();
+
+app.get('/api/sistemas', exigirLogin, (req, res) => res.json(listaSistemas()));
+
+app.post('/api/sistemas/verificar', exigirLogin, a(async (req, res) => {
+  await verificarTodos();
+  res.json(listaSistemas());
+}));
+
+app.post('/api/sistemas', exigirAdmin, a(async (req, res) => {
+  const { item, erro } = lerSistema(req.body);
+  if (erro) return res.status(400).json({ erro });
+  const ks = Object.keys(item);
+  const id = Number(db.prepare(`INSERT INTO sistemas (${ks.join(', ')}) VALUES (${ks.map(() => '?').join(', ')})`).run(...ks.map((k) => item[k])).lastInsertRowid);
+  auditar(req, 'cadastrou sistema', item.nome);
+  if (item.monitorar) await verificarSistema({ id, ...item });
+  res.json({ id });
+}));
+
+app.put('/api/sistemas/:id', exigirAdmin, a(async (req, res) => {
+  const atual = db.prepare('SELECT * FROM sistemas WHERE id = ?').get(Number(req.params.id));
+  if (!atual) return res.status(404).json({ erro: 'Sistema não encontrado.' });
+  const { item, erro } = lerSistema({ ...atual, ...req.body });
+  if (erro) return res.status(400).json({ erro });
+  const ks = Object.keys(item);
+  db.prepare(`UPDATE sistemas SET ${ks.map((k) => `${k} = ?`).join(', ')}, atualizado_em = datetime('now') WHERE id = ?`).run(...ks.map((k) => item[k]), atual.id);
+  if (item.url !== atual.url) db.prepare('UPDATE sistemas SET status = NULL, verificado_em = NULL, online_em = NULL, erro = NULL WHERE id = ?').run(atual.id);
+  auditar(req, 'alterou sistema', item.nome);
+  if (item.monitorar) await verificarSistema({ id: atual.id, ...item });
+  res.json({ ok: true });
+}));
+
+app.delete('/api/sistemas/:id', exigirAdmin, (req, res) => {
+  const s = db.prepare('SELECT nome FROM sistemas WHERE id = ?').get(Number(req.params.id));
+  if (!s) return res.status(404).json({ erro: 'Sistema não encontrado.' });
+  db.prepare('DELETE FROM sistemas WHERE id = ?').run(Number(req.params.id));
+  auditar(req, 'excluiu sistema', s.nome);
+  res.json({ ok: true });
+});
+
 // ---------- administração ----------
 app.get('/api/admin/usuarios', exigirAdmin, (req, res) => {
   res.json(db.prepare('SELECT id, nome, login, perfil, ativo, ultimo_acesso, criado_em FROM usuarios ORDER BY nome COLLATE NOCASE').all());
@@ -882,7 +992,10 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
+  // Verificação periódica da central de sistemas (a primeira logo após iniciar).
+  setTimeout(() => verificarTodos().catch(() => {}), 5000).unref();
+  setInterval(() => verificarTodos().catch(() => {}), INTERVALO_VERIFICACAO_MS).unref();
   app.listen(PORT, () => console.log(`AR Consultoria rodando em http://localhost:${PORT}`));
 }
 
-module.exports = { app, numero, somarMeses };
+module.exports = { app, numero, somarMeses, urlBase };
