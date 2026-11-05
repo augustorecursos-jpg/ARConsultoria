@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS servicos (
   atualizado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Portfólio: aplicativos, sistemas, painéis e projetos (Vértice e os cases da Hessel e da Âmbar em destaque).
+-- Portfólio: aplicativos, sistemas, e-books e projetos (conteúdo inicial em catalogo.js).
 -- cliente = nome do cliente atendido (cases); realizado_em = empresa onde o projeto foi feito, quando não é cliente.
 -- recursos = um recurso por linha. A imagem (print da tela) fica em DATA_DIR/vitrine-<id>.png|jpg.
 CREATE TABLE IF NOT EXISTS vitrine (
@@ -269,137 +269,91 @@ function copiarImagem(origem, destinoSemExt) {
   if (fs.existsSync(arq)) fs.copyFileSync(arq, path.join(DATA_DIR, `${destinoSemExt}${path.extname(arq)}`));
 }
 
-// Vértice 2.0 (repositório Vertice_Final): substitui a versão antiga do app de finanças.
-const VERTICE = {
-  nome: 'Vértice',
-  slogan: 'Suas finanças no ponto mais alto de clareza',
-  descricao: 'Aplicativo web de gestão financeira pessoal com a identidade da AR Consultoria. Cada pessoa tem login próprio e acompanha contas do mês, vencimentos, parcelas, recorrências e a visão do ano inteiro. Os dados ficam no servidor e sincronizam entre celular e computador; as contas de acesso são criadas e controladas por um administrador, que não enxerga os lançamentos de ninguém.',
-  recursos: [
-    'Mês: saldo previsto e realizado, falta pagar, receitas e investimentos, com filtros, busca e desfazer',
-    'Vencimentos destacados: atrasados, vence hoje e próximos dias',
-    'Recorrência mensal e parcelamento com valores em centavos (as parcelas fecham o total exato)',
-    'Visão anual: gráfico de entradas × saídas, consolidado por categoria e saldo acumulado',
-    'Dados no servidor, sincronizados entre dispositivos e sem sobrescrever alterações simultâneas',
-    'Contas criadas pelo administrador: senha temporária, bloqueio na hora e redefinição de senha',
-    'Privacidade: o administrador gerencia contas, mas não vê os lançamentos',
-    'Exportação em JSON e CSV, importação (inclusive do Vértice antigo) e instalação no celular (PWA)',
-  ].join('\n'),
-  publico: 'Pessoas e famílias que querem controlar as contas do mês e enxergar o ano',
-  link_repo: 'https://github.com/augustorecursos-jpg/Vertice_Final',
-  tecnologias: 'Node.js, SQLite, HTML/CSS/JavaScript, PWA',
-};
+// ---------- catálogo de ferramentas (portfólio + Central de sistemas) ----------
+// O conteúdo está em catalogo.js. Cada banco aplica a versão do catálogo uma única vez, na inicialização.
+const { CATALOGO_VERSAO, FERRAMENTAS } = require('./catalogo');
 
-if (!db.prepare('SELECT COUNT(*) n FROM vitrine').get().n) {
-  const vertice = db.prepare(`INSERT INTO vitrine (nome, tipo, slogan, descricao, recursos, publico, link, link_repo, tecnologias, destaque, ordem)
-    VALUES (?, 'aplicativo', ?, ?, ?, ?, '', ?, ?, 1, 1)`).run(VERTICE.nome, VERTICE.slogan, VERTICE.descricao, VERTICE.recursos,
-    VERTICE.publico, VERTICE.link_repo, VERTICE.tecnologias);
-  // Prints reais do Vértice 2.0 (com dados de exemplo).
-  copiarImagem('vitrine/vertice-1.jpg', `vitrine-${Number(vertice.lastInsertRowid)}-1`);
-  copiarImagem('vitrine/vertice-2.jpg', `vitrine-${Number(vertice.lastInsertRowid)}-2`);
-  db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('vertice_v2', '1')").run();
+// Bancos anteriores ao catálogo não têm a coluna "chave" (identifica o item do catálogo).
+for (const tabela of ['vitrine', 'sistemas']) {
+  if (!db.prepare(`PRAGMA table_info(${tabela})`).all().some((c) => c.name === 'chave')) db.exec(`ALTER TABLE ${tabela} ADD COLUMN chave TEXT`);
 }
 
-// Bancos criados com o Vértice antigo: atualiza textos, links e prints para o Vértice 2.0 (uma única vez).
-// Só mexe no item que ainda aponta para o repositório antigo, para não desfazer edições feitas no sistema.
-if (!db.prepare("SELECT 1 FROM config WHERE chave = 'vertice_v2'").get()) {
-  const antigo = db.prepare("SELECT id FROM vitrine WHERE link_repo LIKE '%App_Vertice_Gest-o_Financeira%'").get();
-  if (antigo) {
-    db.prepare(`UPDATE vitrine SET slogan = ?, descricao = ?, recursos = ?, publico = ?, link_repo = ?, tecnologias = ?,
-      atualizado_em = datetime('now') WHERE id = ?`).run(VERTICE.slogan, VERTICE.descricao, VERTICE.recursos, VERTICE.publico,
-      VERTICE.link_repo, VERTICE.tecnologias, antigo.id);
-    for (const n of [1, 2]) for (const ext of ['png', 'jpg']) fs.rmSync(path.join(DATA_DIR, `vitrine-${antigo.id}-${n}.${ext}`), { force: true });
-    copiarImagem('vitrine/vertice-1.jpg', `vitrine-${antigo.id}-1`);
-    copiarImagem('vitrine/vertice-2.jpg', `vitrine-${antigo.id}-2`);
-  }
-  db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('vertice_v2', '1')").run();
+const semAcento = (t) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+/** Encontra o item da vitrine pela chave, pelo repositório (atual ou antigo) ou pelo nome (atual ou antigo). */
+function acharNaVitrine(f) {
+  const porChave = db.prepare('SELECT * FROM vitrine WHERE chave = ?').get(f.chave);
+  if (porChave) return porChave;
+  const linhas = db.prepare('SELECT * FROM vitrine WHERE chave IS NULL').all();
+  const repos = [f.link_repo, ...(f.antigos?.repos || [])].filter(Boolean).map((r) => r.split('/').pop().toLowerCase());
+  const nomes = [f.nome, ...(f.antigos?.nomes || [])].map(semAcento);
+  return linhas.find((l) => l.link_repo && repos.includes(l.link_repo.split('/').pop().toLowerCase()))
+    || linhas.find((l) => nomes.includes(semAcento(l.nome)));
 }
 
-// Central de sistemas: as plataformas já desenvolvidas, sem endereço (preenchido quando cada uma estiver publicada).
-if (!db.prepare("SELECT 1 FROM config WHERE chave = 'seed_sistemas'").get()) {
-  const ins = db.prepare('INSERT INTO sistemas (nome, cliente, descricao, caminho_admin, acesso, ordem) VALUES (?, ?, ?, ?, ?, ?)');
-  [
-    ['Vértice 2.0', 'AR Consultoria', 'Gestão financeira pessoal', '/', 'Login de administrador → menu Usuários'],
-    ['Hessel · Fechamento de folhas', 'Hessel Domiciliar', 'Fechamento de folhas e produtividade', '/admin', 'Usuário administrador do sistema'],
-    ['Trilha de Desenvolvimento (DHO)', 'Âmbar Energia', 'Treinamento de colaboradores', '/admin.html', 'Senha da área do RH (ADMIN_PASSWORD)'],
-    ['Portal de Reembolsos', 'Âmbar Energia', 'Reembolsos de benefícios do RH', '/admin.html', 'Usuário do RH com perfil Administrador'],
-  ].forEach((x, i) => ins.run(...x, i + 1));
-  db.prepare("INSERT INTO config (chave, valor) VALUES ('seed_sistemas', '1')").run();
+function trocarImagens(id, imagens) {
+  for (const n of [1, 2]) for (const ext of ['png', 'jpg']) fs.rmSync(path.join(DATA_DIR, `vitrine-${id}-${n}.${ext}`), { force: true });
+  imagens.forEach((img, n) => copiarImagem(img, `vitrine-${id}-${n + 1}`));
 }
 
-// Cases e projetos iniciais (só na primeira execução): Hessel Domiciliar (cliente) e projetos desenvolvidos na Âmbar Energia.
-// imagens = prints reais das telas (com dados de demonstração) em assets/vitrine; logo do cliente em assets/clientes.
-const CASOS_INICIAIS = [
-  {
-    cliente: { nome: 'Hessel Domiciliar', segmento: 'Saúde', observacoes: 'Atenção domiciliar. Sistema web de fechamento de folhas e produtividade.' },
-    logo: 'clientes/hessel.png',
-    imagens: ['vitrine/hessel-1.jpg', 'vitrine/hessel-2.jpg'],
-    nome: 'Fechamento de folhas e produtividade',
-    slogan: 'Do lançamento dos atendimentos ao fechamento do mês, sem retrabalho',
-    descricao: 'Sistema web feito sob medida para a Hessel Domiciliar, empresa de atenção domiciliar. Centraliza os cadastros de pacientes e profissionais, a planilha de atendimentos do mês e a conferência das folhas recebidas, mostrando na hora o que falta e o que chegou com o nome errado. Relatórios e documentos saem em PDF no papel timbrado da empresa.',
-    recursos: [
-      'Painel do mês: pacientes e profissionais ativos, atendimentos lançados e folhas recebidas × faltando',
-      'Planilha de atendimento por paciente + profissional, dia a dia, com salvamento automático',
-      'Conferência das folhas da pasta: nome correto, grafia diferente, fora do padrão, duplicadas e faltantes',
-      'Script que renomeia todos os arquivos para o padrão com dois cliques',
-      'Cadastros com importação do Excel e exportação para Excel e PDF',
-      'Papel timbrado e documentos (declarações, ofícios, recibos) em PDF',
-      'Usuários com perfis, auditoria de ações e backup do banco',
-    ],
-    publico: 'Operação e administrativo da Hessel Domiciliar',
-    link_repo: 'https://github.com/augustorecursos-jpg/Hessel',
-    tecnologias: 'Node.js, SQLite, HTML/CSS/JavaScript, PDF e Excel',
-  },
-  {
-    realizado_em: 'Âmbar Energia',
-    imagens: ['vitrine/dho-1.jpg', 'vitrine/dho-2.jpg'],
-    nome: 'Trilha de Desenvolvimento (DHO)',
-    slogan: 'Treinamento dos colaboradores com avaliação e certificado automático',
-    descricao: 'Plataforma de treinamento desenvolvida na Âmbar Energia para o time de DHO, acessada pelos colaboradores de todas as regionais apenas com o CPF. Organiza os temas da trilha com materiais em PDF protegidos, avaliações corrigidas no servidor e certificado emitido automaticamente para quem atinge 70% de acerto, além de um painel de indicadores para o RH.',
-    recursos: [
-      'Acesso do colaborador pelo CPF, com base importada do Excel (CPF, nome, cargo, filial e regional)',
-      'Temas com materiais em PDF exibidos na plataforma, com bloqueio de impressão, cópia e captura',
-      'Avaliações com gabarito no servidor; aprovação a partir de 70% e certificado em PDF com código de autenticidade',
-      'Avaliação de reação com escala, nota, múltipla escolha e texto livre, inclusive por QR Code',
-      'Painel do RH: acessos, conclusão por tema e regional, certificados, notas e aprovação',
-      'Resultados por colaborador com filtros e exportação, backup do banco',
-    ],
-    publico: 'Colaboradores de todas as regionais e time de DHO / RH',
-    link_repo: 'https://github.com/augustorecursos-jpg/DHO-mbar',
-    tecnologias: 'Node.js, SQLite, HTML/CSS/JavaScript, pdf.js e pdf-lib',
-  },
-  {
-    realizado_em: 'Âmbar Energia',
-    imagens: ['vitrine/reembolsos-1.jpg', 'vitrine/reembolsos-2.jpg'],
-    nome: 'Portal de Reembolsos',
-    slogan: 'Solicitação, análise e aprovação de reembolsos sem e-mail e sem planilha paralela',
-    descricao: 'Portal desenvolvido na Âmbar Energia para o RH controlar os reembolsos de medicamento, educacional, creche/babá e óculos. O colaborador envia a solicitação com os documentos pelo CPF, o RH analisa com saldo e histórico de cada beneficiário, e no dia 11 o sistema gera o arquivo das aprovadas para a folha de pagamento. Tudo fica rastreável, com regras de elegibilidade e limites aplicadas automaticamente.',
-    recursos: [
-      'Solicitação em 5 passos com anexos obrigatórios e validações na tela e no servidor',
-      'Regras de cada benefício: limites por mês ou período, faixas etárias, sucedidos × não sucedidos',
-      'Saldo calculado na hora (aprovadas e em análise) e bloqueio de aprovação acima do limite',
-      'Área do RH: filtros, aprovação total ou parcial, reprovação com justificativa e linha do tempo',
-      'Arquivo da folha de pagamento em CSV ou Excel, com verba de cada benefício',
-      'Base mensal de elegibilidade importada do Excel, avisos por e-mail, auditoria e backup',
-    ],
-    publico: 'Colaboradores e time de RH da Âmbar Energia',
-    link_repo: 'https://github.com/augustorecursos-jpg/Reembolsos_-mbar',
-    tecnologias: 'Node.js, SQLite, HTML/CSS/JavaScript, Excel e e-mail',
-  },
-];
-
-if (!db.prepare("SELECT 1 FROM config WHERE chave = 'seed_casos'").get()) {
-  CASOS_INICIAIS.forEach((c, i) => {
-    if (c.cliente && !db.prepare('SELECT 1 FROM clientes WHERE nome = ?').get(c.cliente.nome)) {
-      const cli = db.prepare("INSERT INTO clientes (nome, segmento, origem, observacoes, portfolio) VALUES (?, ?, 'Indicação', ?, 1)")
-        .run(c.cliente.nome, c.cliente.segmento || null, c.cliente.observacoes || null);
-      if (c.logo) copiarImagem(c.logo, `cliente-${Number(cli.lastInsertRowid)}`);
+function aplicarCatalogo() {
+  FERRAMENTAS.forEach((f, i) => {
+    // Cliente do case (cadastrado só se ainda não existir; o logo entra se o cliente não tiver um).
+    if (f.cliente) {
+      let cli = db.prepare('SELECT id FROM clientes WHERE nome = ?').get(f.cliente.nome);
+      if (!cli) {
+        cli = { id: Number(db.prepare("INSERT INTO clientes (nome, segmento, origem, observacoes, portfolio) VALUES (?, ?, 'Indicação', ?, 1)")
+          .run(f.cliente.nome, f.cliente.segmento || null, f.cliente.observacoes || null).lastInsertRowid) };
+      }
+      const temLogo = ['png', 'jpg'].some((ext) => fs.existsSync(path.join(DATA_DIR, `cliente-${cli.id}.${ext}`)));
+      if (f.cliente.logo && !temLogo) copiarImagem(f.cliente.logo, `cliente-${cli.id}`);
     }
-    const r = db.prepare(`INSERT INTO vitrine (nome, tipo, cliente, realizado_em, slogan, descricao, recursos, publico, link, link_repo, tecnologias, destaque, ordem)
-      VALUES (?, 'sistema', ?, ?, ?, ?, ?, ?, '', ?, ?, 1, ?)`).run(c.nome, c.cliente?.nome || null, c.realizado_em || null, c.slogan, c.descricao, c.recursos.join('\n'),
-      c.publico, c.link_repo, c.tecnologias, i + 2);
-    (c.imagens || []).forEach((img, n) => copiarImagem(img, `vitrine-${Number(r.lastInsertRowid)}-${n + 1}`));
+
+    // Item do portfólio: textos e prints do catálogo; ordem, destaque, publicação e link continuam como estão.
+    const campos = {
+      chave: f.chave, nome: f.nome, tipo: f.tipo, cliente: f.cliente?.nome || null, realizado_em: f.realizado_em || null,
+      slogan: f.slogan, descricao: f.descricao, recursos: f.recursos.join('\n'), publico: f.publico,
+      link_repo: f.link_repo || null, tecnologias: f.tecnologias,
+    };
+    const atual = acharNaVitrine(f);
+    let id;
+    if (atual) {
+      id = atual.id;
+      db.prepare(`UPDATE vitrine SET ${Object.keys(campos).map((k) => `${k} = ?`).join(', ')}, atualizado_em = datetime('now') WHERE id = ?`)
+        .run(...Object.values(campos), id);
+    } else {
+      const ks = [...Object.keys(campos), 'link', 'destaque', 'publicado', 'ordem'];
+      id = Number(db.prepare(`INSERT INTO vitrine (${ks.join(', ')}) VALUES (${ks.map(() => '?').join(', ')})`)
+        .run(...Object.values(campos), '', 1, 1, i + 1).lastInsertRowid);
+    }
+    trocarImagens(id, f.imagens);
+
+    // Central de sistemas: atualiza nome, cliente, descrição e acesso; o endereço cadastrado não muda.
+    const sis = f.sistema;
+    const nomesSis = [sis.nome, ...(sis.antigos || [])].map(semAcento);
+    const existente = db.prepare('SELECT * FROM sistemas WHERE chave = ?').get(f.chave)
+      || db.prepare('SELECT * FROM sistemas WHERE chave IS NULL').all().find((x) => nomesSis.includes(semAcento(x.nome)));
+    if (existente) {
+      db.prepare(`UPDATE sistemas SET chave = ?, nome = ?, cliente = ?, descricao = ?, caminho_admin = COALESCE(caminho_admin, ?), acesso = ?,
+        atualizado_em = datetime('now') WHERE id = ?`).run(f.chave, sis.nome, sis.cliente, sis.descricao, sis.caminho_admin, sis.acesso, existente.id);
+    } else {
+      db.prepare('INSERT INTO sistemas (chave, nome, cliente, descricao, caminho_admin, acesso, ordem, monitorar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(f.chave, sis.nome, sis.cliente, sis.descricao, sis.caminho_admin, sis.acesso, i + 1, sis.monitorar ?? 1);
+    }
   });
-  db.prepare("INSERT INTO config (chave, valor) VALUES ('seed_casos', '1')").run();
+}
+
+const versaoAplicada = Number(db.prepare("SELECT valor FROM config WHERE chave = 'catalogo_versao'").get()?.valor || 0);
+if (versaoAplicada < CATALOGO_VERSAO) {
+  db.exec('BEGIN');
+  try {
+    aplicarCatalogo();
+    db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('catalogo_versao', ?)").run(String(CATALOGO_VERSAO));
+    db.exec('COMMIT');
+  } catch (e) {
+    db.exec('ROLLBACK');
+    throw e;
+  }
 }
 
 // ---------- senhas (scrypt) ----------

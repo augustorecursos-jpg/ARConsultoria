@@ -214,7 +214,7 @@ app.get('/api/config', exigirLogin, (req, res) => res.json(lerConfig()));
 // ['a', 'b'] = uma das opções, { fk: 'tabela' } = id de outra tabela.
 const LEAD_STATUS = ['novo', 'contato', 'proposta', 'ganho', 'perdido'];
 const PROJETO_STATUS = ['planejado', 'andamento', 'pausado', 'concluido', 'cancelado'];
-const VITRINE_TIPOS = ['aplicativo', 'sistema', 'painel', 'ferramenta', 'projeto'];
+const VITRINE_TIPOS = ['aplicativo', 'sistema', 'painel', 'ferramenta', 'ebook', 'projeto'];
 
 const TABELAS = {
   clientes: {

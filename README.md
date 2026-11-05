@@ -21,7 +21,7 @@ Identidade visual tirada do logo da AR: marinho `#17397d`, azul `#005ea4`, ciano
     quando não é cliente.
   - **Serviços**: catálogo com resumo, ícone, preço base e ordem (também usado nas propostas).
   - **Capa, sobre mim e contato**: textos, anos de experiência, empresas, habilidades e redes.
-- **Central de sistemas**: as plataformas desenvolvidas (Vértice 2.0, Hessel, Trilha DHO, Portal de Reembolsos) em cartões,
+- **Central de sistemas**: as 7 ferramentas do catálogo (Vértice, Hessel, Talent Review, Jornada, Orçamento, Trilha DHO e Reembolsos) em cartões,
   com o endereço publicado, link direto para a área de administração e a situação de cada uma (no ar, fora do ar, sem endereço).
   O servidor da AR consulta `<endereço>/healthz` de cada sistema ao abrir a tela, no botão “Verificar agora” e a cada 15 minutos;
   sistemas fora do ar aparecem em vermelho no menu e em um aviso no Painel. **Nenhuma senha é guardada**: o acesso continua
@@ -51,20 +51,32 @@ A4 paisagem, nesta ordem (cada parte pode ser ligada/desligada ao gerar):
 6. **Outros trabalhos** — itens sem destaque, 3 por página.
 7. **Contato** — telefone/WhatsApp, e-mail, Instagram, LinkedIn e link do portfólio online.
 
-### Conteúdo inicial
+### Ferramentas do portfólio (catálogo)
 
-Na primeira execução o sistema já vem com:
-- os 5 serviços do portfólio do Augusto (consultoria financeira, painéis, automações, aplicativos e treinamentos) e os textos de “Sobre mim”;
-- **Vértice 2.0** (aplicativo, destaque) — a versão nova do repositório `Vertice_Final`: login por conta criada pelo administrador,
-  dados no servidor sincronizados entre dispositivos, vencimentos, parcelas, visão anual e PWA;
-- **Fechamento de folhas e produtividade** — case da cliente **Hessel Domiciliar** (cliente cadastrada com o logo);
-- **Trilha de Desenvolvimento (DHO)** e **Portal de Reembolsos** — projetos desenvolvidos na Âmbar Energia (a Âmbar não é cadastrada como cliente).
+As ferramentas desenvolvidas ficam em `catalogo.js`, que alimenta o portfólio e a Central de sistemas:
 
-Os prints em `assets/vitrine/` foram tirados dos próprios sistemas rodando com **dados de demonstração** (nomes e valores fictícios);
-dá para trocar por outros a qualquer momento no botão de imagem de cada item.
-O link do Vértice publicado não foi preenchido (fica em Portfólio → Vértice → Editar → “Link para acessar”).
-Bancos criados antes da troca são atualizados sozinhos para o Vértice 2.0 na próxima inicialização (textos, links e prints),
-desde que o item ainda aponte para o repositório antigo.
+| Ferramenta | Tipo | Onde |
+|---|---|---|
+| **Vértice** (pessoa física e Vértice Empresas) | Aplicativo | AR Consultoria |
+| **Fechamento de folhas e produtividade** | Sistema web | Case da cliente **Hessel Domiciliar** (cadastrada com o logo) |
+| **Talent Review** | E-book interativo | Versão neutra no visual da AR |
+| **Jornada do Colaborador** (Primeiras Conexões, Avaliação de Experiência e Entrevista de Desligamento) | Sistema web | Desenvolvido na Âmbar Energia |
+| **Orçamento de Pessoal** | Sistema web | Desenvolvido na Âmbar Energia |
+| **Trilha de Desenvolvimento (DHO)** | Sistema web | Desenvolvido na Âmbar Energia |
+| **Portal de Reembolsos** | Sistema web | Desenvolvido na Âmbar Energia |
+
+A Âmbar não é cadastrada como cliente. Também entram os 5 serviços do portfólio e os textos de “Sobre mim”.
+
+Os prints em `assets/vitrine/` foram tirados das próprias ferramentas rodando com **dados fictícios** (nenhum dado real e
+nenhuma foto de pessoas); os do Vértice vêm do guia oficial do app. Dá para trocar por outros no botão de imagem de cada item.
+
+**Para atualizar o portfólio** quando uma ferramenta mudar: edite `catalogo.js` (e os prints em `assets/vitrine/`) e aumente
+`CATALOGO_VERSAO`. Na próxima inicialização, cada banco aplica a versão nova uma única vez: textos, recursos, prints e o
+cliente do case são atualizados, e ferramentas novas são incluídas. Fica como está o que é do usuário: ordem, destaque,
+“aparece no portfólio”, link publicado e o endereço cadastrado na Central de sistemas. Os itens são reencontrados pela
+chave do catálogo ou, em bancos antigos, pelo repositório ou pelo nome — nada é duplicado.
+
+Os links publicados não foram preenchidos (Portfólio → item → Editar → “Link para acessar”; e Central de sistemas → Editar).
 
 ## Como rodar
 
@@ -97,7 +109,8 @@ Primeiro acesso: usuário **`admin`**, senha **`ar-admin`** (o painel avisa até
 
 ```
 server.js      API (login, portfólio, leads, clientes, propostas, projetos, financeiro, documentos, admin) + arquivos estáticos
-db.js          esquema SQLite, conteúdo inicial do portfólio e senhas (scrypt)
+db.js          esquema SQLite, aplicação do catálogo e senhas (scrypt)
+catalogo.js    ferramentas desenvolvidas: textos, prints e dados da Central de sistemas
 pdf.js         portfólio, propostas, papel timbrado, documentos e tabelas em PDF (pdf-lib)
 assets/        fontes, prints e logos usados no conteúdo inicial
 public/        telas em HTML/CSS/JS puro

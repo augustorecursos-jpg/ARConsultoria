@@ -577,7 +577,7 @@ const ICONES_PDF = {
 };
 
 const MESES_PDF = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-const TIPOS_VITRINE = { aplicativo: 'Aplicativo', sistema: 'Sistema web', painel: 'Painel / dashboard', ferramenta: 'Ferramenta', projeto: 'Projeto' };
+const TIPOS_VITRINE = { aplicativo: 'Aplicativo', sistema: 'Sistema web', painel: 'Painel / dashboard', ferramenta: 'Ferramenta', ebook: 'E-book interativo', projeto: 'Projeto' };
 
 /** Desenho genérico de um app (usado quando o item não tem print da tela). */
 function desenharMockup(page, x, y, w, h) {

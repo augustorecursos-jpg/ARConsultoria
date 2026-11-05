@@ -52,8 +52,15 @@ test('conteúdo inicial do portfólio: Vértice, case da Hessel e projetos da Â
   const nomes = vitrine.map((v) => v.nome);
   assert.ok(nomes.includes('Vértice'));
   assert.match(vitrine.find((v) => v.nome === 'Vértice').link_repo, /Vertice_Final$/);
-  assert.ok(nomes.includes('Trilha de Desenvolvimento (DHO)'));
-  assert.ok(nomes.includes('Portal de Reembolsos'));
+  for (const n of ['Fechamento de folhas e produtividade', 'Talent Review', 'Jornada do Colaborador', 'Orçamento de Pessoal',
+    'Trilha de Desenvolvimento (DHO)', 'Portal de Reembolsos']) assert.ok(nomes.includes(n), n);
+  assert.strictEqual(vitrine.length, 7);
+  assert.strictEqual(vitrine.find((v) => v.nome === 'Talent Review').tipo, 'ebook');
+  for (const n of ['Jornada do Colaborador', 'Orçamento de Pessoal', 'Trilha de Desenvolvimento (DHO)']) {
+    assert.strictEqual(vitrine.find((v) => v.nome === n).realizado_em, 'Âmbar Energia', n);
+  }
+  // Toda ferramenta do catálogo vem com os 2 prints.
+  for (const v of vitrine) assert.strictEqual((await req('GET', `/api/vitrine/${v.id}/imagem/2`)).status, 200, v.nome);
   assert.strictEqual(vitrine.find((v) => v.nome === 'Fechamento de folhas e produtividade').cliente, 'Hessel Domiciliar');
   assert.strictEqual(vitrine.find((v) => v.nome === 'Portal de Reembolsos').realizado_em, 'Âmbar Energia');
   const clientes = (await req('GET', '/api/clientes')).dados.map((c) => c.nome);
@@ -123,7 +130,8 @@ test('endereços aceitos na central de sistemas', () => {
 
 test('central de sistemas: cadastro inicial e verificação de "no ar"', async () => {
   const lista = (await req('GET', '/api/sistemas')).dados;
-  assert.deepStrictEqual(lista.map((x) => x.nome), ['Vértice 2.0', 'Hessel · Fechamento de folhas', 'Trilha de Desenvolvimento (DHO)', 'Portal de Reembolsos']);
+  assert.deepStrictEqual(lista.map((x) => x.nome), ['Vértice', 'Hessel · Fechamento de folhas', 'Talent Review (e-book)', 'Jornada do Colaborador',
+    'Orçamento de Pessoal', 'Trilha de Desenvolvimento (DHO)', 'Portal de Reembolsos']);
   assert.ok(lista.every((x) => !x.url));
 
   // Um "sistema" de mentira no ar e outro desligado.
@@ -136,8 +144,8 @@ test('central de sistemas: cadastro inicial e verificação de "no ar"', async (
     assert.strictEqual((await req('PUT', `/api/sistemas/${lista[2].id}`, { url: 'javascript:alert(1)' })).status, 400);
     const r = (await req('POST', '/api/sistemas/verificar')).dados;
     const por = Object.fromEntries(r.map((x) => [x.nome, x]));
-    assert.strictEqual(por['Vértice 2.0'].status, 'online');
-    assert.ok(por['Vértice 2.0'].online_em);
+    assert.strictEqual(por['Vértice'].status, 'online');
+    assert.ok(por['Vértice'].online_em);
     assert.strictEqual(por['Hessel · Fechamento de folhas'].status, 'offline');
     assert.strictEqual(por['Portal de Reembolsos'].status, 'sem_endereco');
     const painel = (await req('GET', '/api/painel')).dados;

@@ -32,7 +32,7 @@ const PROJETO_STATUS = {
   concluido: { rot: 'Concluído', cor: 'ok' },
   cancelado: { rot: 'Cancelado', cor: 'neutra' },
 };
-const TIPOS_VITRINE = { aplicativo: 'Aplicativo', sistema: 'Sistema web', painel: 'Painel / dashboard', ferramenta: 'Ferramenta', projeto: 'Projeto' };
+const TIPOS_VITRINE = { aplicativo: 'Aplicativo', sistema: 'Sistema web', painel: 'Painel / dashboard', ferramenta: 'Ferramenta', ebook: 'E-book interativo', projeto: 'Projeto' };
 const ICONES_SERVICO = { grafico: 'grafico', painel: 'painel', raio: 'raio', app: 'app', capelo: 'capelo', alvo: 'alvo', estrela: 'estrela', dinheiro: 'dinheiro' };
 
 const tag = (mapa, k) => `<span class="tag ${mapa[k]?.cor || 'neutra'}">${esc(mapa[k]?.rot || k || '')}</span>`;
